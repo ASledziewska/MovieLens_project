@@ -6,7 +6,7 @@ The aim of this project is to create a movie recommendation system based on the 
 
 The data used in the project is just a subset of a dataset with millions of ratings. The dataset contains information about movie ID, user ID, movie title, given rating, timestamp and genres of the movie.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table1.jpg" alt="Table 1" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table1.jpg" alt="Table 1" width="400"/>
 
 First of all, the dataset was examined and it was split into training and test set. Then, basic visualizations were created to better understand the data. Finally, the recommendation system was built step by step, starting from simple average rating and adding additional effects. The system was assessed using RMSE calculated on the test set.
 
@@ -23,15 +23,15 @@ Given ratings ranged from 0.5 to 5 and users were more likely to give whole star
 
 Most rated genres included Drama and Comedy, however, some movies were categorized into a few genres.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table2.jpg" alt="Table 2" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table2.jpg" alt="Table 2" width="350"/>
 
 Users most often rated movies such as Pulp Fiction, Forrest Gump and The Silence of the Lambs.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table3.jpg" alt="Table 3" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table3.jpg" alt="Table 3" width="450"/>
 
 The most active users rated over 6000 movies.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table4.jpg" alt="Table 4" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table4.jpg" alt="Table 4" width="200"/>
 
 However, the majority of users rated fewer than 100 movies.
 
@@ -55,7 +55,7 @@ Finally, a penalty is added not to overtrust some predictions coming from very s
 
 The table below presents the RMSEs for each model with the RMSE of the final model equal to 0.8648.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table5.jpg" alt="Table 5" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table5.jpg" alt="Table 5" width="800"/>
 
 As mentioned before, the final models includes a prediction based on general average rating, average rating for each movie, average rating for each user and penalty for overtrusting small subsamples.
 
@@ -63,7 +63,7 @@ The RMSE was calculated on a test set. The final model is burdened with 86.48% e
 
 Comparison of exemplary predicted ratings and true ratings is presented below.
 
-<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table6.jpg" alt="Table 6" width="600"/>
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table6.jpg" alt="Table 6" width="250"/>
 
 
 ## Conclusion
