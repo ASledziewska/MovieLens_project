@@ -6,34 +6,7 @@ The aim of this project is to create a movie recommendation system based on the 
 
 The data used in the project is just a subset of a dataset with millions of ratings. The dataset contains information about movie ID, user ID, movie title, given rating, timestamp and genres of the movie.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(dplyr)
-library(ggplot2)
-library(tidyverse)
-library(caret)
-library(data.table)
-dl <- tempfile()
-download.file("http://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
-ratings <- fread(text = gsub("::", "\t", readLines(unzip(dl, "ml-10M100K/ratings.dat"))),
-                 col.names = c("userId", "movieId", "rating", "timestamp"))
-movies <- str_split_fixed(readLines(unzip(dl, "ml-10M100K/movies.dat")), "\\::", 3)
-colnames(movies) <- c("movieId", "title", "genres")
-movies <- as.data.frame(movies) %>% mutate(movieId = as.numeric(levels(movieId))[movieId],
-                                           title = as.character(title),
-                                           genres = as.character(genres))
-movielens <- left_join(ratings, movies, by = "movieId")
-set.seed(1, sample.kind="Rounding")
-test_index <- createDataPartition(y = movielens$rating, times = 1, p = 0.1, list = FALSE)
-edx <- movielens[-test_index,]
-temp <- movielens[test_index,]
-validation <- temp %>% 
-  semi_join(edx, by = "movieId") %>%
-  semi_join(edx, by = "userId")
-removed <- anti_join(temp, validation, by = c("userId", "movieId", "rating", "timestamp", "title", "genres"))
-edx <- rbind(edx, removed)
-rm(dl, ratings, movies, test_index, temp, movielens, removed)
-edx %>% head(n=10)
-```
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table1.jpg" alt="Table 1" width="600"/>
 
 First of all, the dataset was examined and it was split into training and test set. Then, basic visualizations were created to better understand the data. Finally, the recommendation system was built step by step, starting from simple average rating and adding additional effects. The system was assessed using RMSE calculated on the test set.
 
@@ -43,39 +16,26 @@ First of all, the dataset was examined and it was split into training and test s
 Firstly, the dataset was split into training and test set. The test set accounted for 10% of the original dataset. The training set contained over 9 M observations of 6 variables.
 
 Secondly, through data visualization the data was checked for outliers and mistakes. The distribution of given ratings is presented on a graph below:
-```{r, echo=FALSE}
-edx %>% ggplot(aes(rating)) + geom_bar()
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/image1.jpg" alt="Plot 1" width="600"/>
 
 Given ratings ranged from 0.5 to 5 and users were more likely to give whole star ratings than half star ratings. Users most often gave 4 as a rating.
 
 Most rated genres included Drama and Comedy, however, some movies were categorized into a few genres.
-```{r, echo=FALSE}
-edx %>% group_by(genres) %>% summarize(count = n()) %>% arrange(desc(count)) %>% head(n=10)
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table2.jpg" alt="Table 2" width="600"/>
 
 Users most often rated movies such as Pulp Fiction, Forrest Gump and The Silence of the Lambs.
-```{r, echo=FALSE}
-edx %>% group_by(movieId, title) %>%
-  summarize(count = n()) %>%
-  arrange(desc(count)) %>% head(n=5)
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table3.jpg" alt="Table 3" width="600"/>
 
 The most active users rated over 6000 movies.
-```{r, echo=FALSE}
-edx %>% group_by(userId) %>%
-  summarize(count = n()) %>%
-  arrange(desc(count)) %>% head(n=5)
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table4.jpg" alt="Table 4" width="600"/>
 
 However, the majority of users rated fewer than 100 movies.
-```{r, echo=FALSE}
-edx %>% group_by(userId) %>%
-  summarize(count = n()) %>%
-  filter(count <= 500) %>%
-  ggplot(aes(count)) +
-  geom_histogram(binwidth = 5)
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/image2.jpg" alt="Plot 2" width="600"/>
 
 Finally, the predictive model was built in 4 steps:
 
@@ -94,47 +54,16 @@ Finally, a penalty is added not to overtrust some predictions coming from very s
 ## Results
 
 The table below presents the RMSEs for each model with the RMSE of the final model equal to 0.8648.
-```{r, echo=FALSE}
-mu_hat <- mean(edx$rating)
-naive_rmse <- RMSE(validation$rating, mu_hat)
-rmse_results <- tibble(method = "Just the average", RMSE = naive_rmse)
-mu <- mean(edx$rating)
-movie_avgs <- edx %>% group_by(movieId) %>% summarize(b_i = mean(rating - mu))
-predicted_ratings <- validation %>% left_join(movie_avgs, by="movieId") %>%
-  mutate(pred = mu + b_i) %>% .$pred
-model_1_rmse <- RMSE(predicted_ratings, validation$rating)
-rmse_results <- bind_rows(rmse_results, tibble(method = "Movie Effect Model", RMSE = model_1_rmse))
-user_avgs <- edx %>% left_join(movie_avgs, by="movieId") %>% group_by(userId) %>%
-  summarize(b_u = mean(rating - mu - b_i))
-predicted_ratings <- validation %>% left_join(movie_avgs, by="movieId") %>%
-  left_join(user_avgs, by="userId") %>% mutate(pred = mu + b_i + b_u) %>% .$pred
-model_2_rmse <- RMSE(predicted_ratings, validation$rating)
-rmse_results <- bind_rows(rmse_results, tibble(method = "Movie + User Effects Model", RMSE = model_2_rmse))
-lambda <- 5
-b_i <- edx %>% group_by(movieId) %>%
-  summarize(b_i = sum(rating - mu)/(n() + lambda))
-b_u <- edx %>% left_join(b_i, by="movieId") %>% group_by(userId) %>% 
-  summarize(b_u = sum(rating - b_i - mu)/(n() + lambda))
-predicted_ratings <- validation %>% left_join(b_i, by="movieId") %>% 
-  left_join(b_u, by="userId") %>%
-  mutate(pred = mu + b_i + b_u) %>% .$pred
-model_3_rmse <- RMSE(predicted_ratings, validation$rating)
-rmse_results <- bind_rows(rmse_results, tibble(method = "Regularized Movie + User Effects Model", RMSE = model_3_rmse))
-rmse_results %>% knitr::kable()
-rmse_results <- bind_rows(rmse_results, tibble(method = "Movie Effect Model", RMSE = model_3_rmse))
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table5.jpg" alt="Table 5" width="600"/>
 
 As mentioned before, the final models includes a prediction based on general average rating, average rating for each movie, average rating for each user and penalty for overtrusting small subsamples.
 
 The RMSE was calculated on a test set. The final model is burdened with 86.48% error in comparison with the true rating a user would give to a given movie. It is a huge improvement compared to the primary model that was burdened with more than 100% error.
 
 Comparison of exemplary predicted ratings and true ratings is presented below.
-```{r, echo=FALSE}
-validation$pred <- validation %>% left_join(b_i, by="movieId") %>% 
-  left_join(b_u, by="userId") %>%
-  mutate(pred = mu + b_i + b_u) %>% .$pred
-validation %>% select(rating, pred) %>% head(n=20)
-```
+
+<img src="https://github.com/ASledziewska/MovieLens_project/blob/master/images/Table6.jpg" alt="Table 6" width="600"/>
 
 
 ## Conclusion
